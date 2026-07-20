@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Cafiez Staff Leave Manager</title>
+<style>
+body{margin:0;font-family:Segoe UI;background:#1f2125;color:#fff}header{background:#6f4e37;padding:18px;font-size:28px;font-weight:700}
+.wrap{max-width:1200px;margin:auto;padding:20px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card,.panel{background:#2b2d31;border-radius:12px;padding:15px}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.form input,.form select{padding:10px;background:#1a1b1e;color:#fff;border:1px solid #555;border-radius:8px}
+button{padding:10px 14px;border:0;border-radius:8px;background:#8b5e3c;color:#fff;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:15px}th,td{padding:10px;border-bottom:1px solid #444}th{background:#383a40}.badge{padding:4px 8px;border-radius:999px}.active{background:#2d7d46}.pending{background:#a87400}.expired{background:#a33}
+</style></head><body><header>Cafiez Staff Leave Manager</header><div class="wrap">
+<div class="grid">
+<div class="card">Total LOAs<br><h2 id=total>0</h2></div>
+<div class="card">Active<br><h2 id=activeCount>0</h2></div>
+<div class="card">Pending<br><h2 id=pendingCount>0</h2></div>
+<div class="card">Expired<br><h2 id=expiredCount>0</h2></div></div>
+<div class="panel"><h3>New Leave Request</h3>
+<div class=form>
+<input id=emp placeholder="Employee Name">
+<input id=position placeholder="Position">
+<input id=store placeholder="Store">
+<select id=type><option>Vacation</option><option>Sick</option><option>Personal</option><option>Emergency</option></select>
+<input id=start type=date><input id=end type=date>
+<select id=status><option>Pending</option><option>Approved</option></select>
+<input id=approved placeholder="Approved By">
+</div><button id=addBtn>Add Request</button> <input id=search placeholder="Search..." style="padding:10px">
+<table><thead><tr><th>Name</th><th>Position</th><th>Store</th><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th><th>Approved By</th><th>Action</th></tr></thead><tbody id=tbody></tbody></table>
+</div></div>
+<script>
+const $=id=>document.getElementById(id);
+let rows=JSON.parse(localStorage.getItem("cafiez_loa")||"[]");
+function left(e){return Math.ceil((new Date(e)-new Date())/86400000);}
+function render(){
+const tb=$("tbody");tb.innerHTML="";
+let a=0,p=0,x=0;
+rows.forEach((r,i)=>{
+ let d=left(r.end),st=r.status==="Pending"?"Pending":d<0?"Expired":"Active";
+ if(st==="Active")a++; else if(st==="Pending")p++; else x++;
+ tb.innerHTML+=`<tr><td>${r.emp}</td><td>${r.position}</td><td>${r.store}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${d}</td><td><span class="badge ${st.toLowerCase()}">${st}</span></td><td>${r.approved}</td><td><button onclick="delRow(${i})">Delete</button></td></tr>`;
+});
+$("total").textContent=rows.length;$("activeCount").textContent=a;$("pendingCount").textContent=p;$("expiredCount").textContent=x;
+localStorage.setItem("cafiez_loa",JSON.stringify(rows));
+}
+window.delRow=i=>{rows.splice(i,1);render();}
+$("addBtn").onclick=()=>{
+const vals=["emp","position","store","start","end","approved"].map(id=>$(id).value.trim());
+if(vals.some(v=>!v)){alert("Please fill in all required fields.");return;}
+rows.push({emp:$("emp").value,position:$("position").value,store:$("store").value,type:$("type").value,start:$("start").value,end:$("end").value,status:$("status").value,approved:$("approved").value});
+["emp","position","store","start","end","approved"].forEach(id=>$(id).value="");
+render();
+};
+$("search").oninput=e=>{
+const q=e.target.value.toLowerCase();
+[...document.querySelectorAll("#tbody tr")].forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none");
+};
+render();
+</script></body></html>
